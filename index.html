@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小學數學直式步驟教學助手 (粵語解說版)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        .font-math {
+            font-family: 'Fredoka', 'Courier New', monospace;
+        }
+
+        /* Math Grid styling */
+        .math-grid {
+            display: grid;
+            font-family: 'Fredoka', monospace;
+            user-select: none;
+        }
+
+        .grid-cell {
+            width: 2.75rem;
+            height: 3.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 700;
+            position: relative;
+            transition: all 0.25s ease-in-out;
+        }
+
+        @media (max-width: 640px) {
+            .grid-cell {
+                width: 2.1rem;
+                height: 2.6rem;
+                font-size: 1.35rem;
+            }
+        }
+
+        /* Active highlight effects */
+        .cell-highlight-primary {
+            background-color: #fef08a; /* Yellow glow */
+            color: #854d0e;
+            border-radius: 0.375rem;
+            transform: scale(1.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .cell-highlight-secondary {
+            background-color: #bfdbfe; /* Blue highlight */
+            color: #1e40af;
+            border-radius: 0.375rem;
+            transform: scale(1.05);
+            z-index: 5;
+        }
+
+        .cell-highlight-result {
+            background-color: #bbf7d0; /* Green highlight */
+            color: #166534;
+            border-radius: 0.375rem;
+            font-weight: 900;
+        }
+
+        .carry-tag {
+            font-size: 0.85rem;
+            color: #dc2626;
+            font-weight: 800;
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            background: #fee2e2;
+            padding: 0px 4px;
+            border-radius: 9999px;
+            border: 1px solid #fca5a5;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .borrow-tag {
+            font-size: 0.8rem;
+            color: #2563eb;
+            font-weight: 800;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .strike-through {
+            position: relative;
+        }
+        .strike-through::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 20%;
+            width: 60%;
+            height: 3px;
+            background-color: #ef4444;
+            transform: rotate(-35deg);
+        }
+
+        /* Division layout specific styling */
+        .division-bracket {
+            border-top: 3px solid #1e293b;
+            border-left: 3px solid #1e293b;
+            border-top-left-radius: 12px;
+            padding-left: 4px;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+        }
+
+        .pulse-active {
+            animation: pulseGlow 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-600 via-blue-600 to-teal-500 text-white shadow-lg mb-6">
+        <div class="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                    <i class="fa-solid font-math text-3xl fa-calculator"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">小學數學直式步驟教學助手</h1>
+                    <p class="text-blue-100 text-sm mt-0.5">逐步按鈕展示 + 粵語口語詳細解釋與原理拆解</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-xl border border-white/20 text-xs">
+                <i class="fa-solid fa-volume-high text-yellow-300"></i>
+                <span>支援廣東話 (zh-HK) 語音發音</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Top Input & Operation Selector Panel (Full width inside column) -->
+        <div class="lg:col-span-12 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                
+                <!-- Operation Switcher Tabs -->
+                <div class="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 gap-1 overflow-x-auto">
+                    <button onclick="setOperation('multiply')" id="tab-multiply" class="op-tab flex-1 min-w-[80px] py-2 px-3 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-indigo-600 text-white shadow-sm">
+                        <i class="fa-solid fa-xmark"></i> 乘法
+                    </button>
+                    <button onclick="setOperation('divide')" id="tab-divide" class="op-tab flex-1 min-w-[80px] py-2 px-3 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-slate-200">
+                        <i class="fa-solid fa-divide"></i> 除法
+                    </button>
+                    <button onclick="setOperation('add')" id="tab-add" class="op-tab flex-1 min-w-[80px] py-2 px-3 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-slate-200">
+                        <i class="fa-solid fa-plus"></i> 加法
+                    </button>
+                    <button onclick="setOperation('subtract')" id="tab-subtract" class="op-tab flex-1 min-w-[80px] py-2 px-3 rounded-lg text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-slate-600 hover:bg-slate-200">
+                        <i class="fa-solid fa-minus"></i> 減法
+                    </button>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">數字 1:</label>
+                        <input type="number" id="num1" value="234" min="1" max="9999" class="w-24 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold text-slate-800 text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+
+                    <span id="op-symbol-display" class="font-bold text-xl text-indigo-600 px-1">×</span>
+
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase">數字 2:</label>
+                        <input type="number" id="num2" value="16" min="1" max="999" class="w-20 px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-center font-bold text-slate-800 text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+
+                    <button onclick="generateCalculation()" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 生成直式
+                    </button>
+                </div>
+
+                <!-- Quick Presets -->
+                <div class="flex items-center gap-1.5 text-xs text-slate-500 overflow-x-auto py-1">
+                    <span class="font-bold whitespace-nowrap"><i class="fa-solid fa-lightbulb text-amber-500"></i> 經典例題:</span>
+                    <button onclick="loadPreset(234, 16, 'multiply')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 transition">234×16 (乘法進位)</button>
+                    <button onclick="loadPreset(756, 12, 'divide')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 transition">756÷12 (除法整除)</button>
+                    <button onclick="loadPreset(845, 6, 'divide')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 transition">845÷6 (除法有餘數)</button>
+                    <button onclick="loadPreset(458, 275, 'add')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 transition">458+275 (加法進位)</button>
+                    <button onclick="loadPreset(502, 168, 'subtract')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-md border border-slate-200 transition">502-168 (連續借位)</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Left Panel: Interactive Math Vertical Visualizer Canvas -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col items-center justify-between min-h-[460px] relative overflow-hidden">
+                
+                <!-- Top Status Header -->
+                <div class="w-full flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="step-counter-text" class="text-sm font-bold text-slate-700">步驟 1 / --</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <label for="auto-speech-toggle" class="text-xs font-semibold text-slate-600 cursor-pointer flex items-center gap-1.5">
+                            <input type="checkbox" id="auto-speech-toggle" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                            切換步驟時自動朗讀
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Math Board Canvas Container -->
+                <div class="w-full flex-1 flex flex-col items-center justify-center my-4 overflow-x-auto py-4">
+                    <div id="math-board" class="p-6 rounded-2xl bg-slate-50/80 border border-slate-200 shadow-inner min-w-[280px] flex justify-center">
+                        <!-- Canvas Grid rendered dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Navigation Control Toolbar -->
+                <div class="w-full bg-slate-50 rounded-xl p-3 border border-slate-200 flex flex-col gap-3">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick="firstStep()" title="返回第一步" class="w-10 h-10 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-backward-step"></i>
+                        </button>
+                        <button onclick="prevStep()" id="btn-prev" title="上一步" class="px-4 h-10 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center font-bold gap-1 text-sm">
+                            <i class="fa-solid fa-chevron-left"></i> 上一步
+                        </button>
+                        
+                        <button onclick="nextStep()" id="btn-next" title="下一步" class="px-6 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white transition flex items-center justify-center font-bold gap-2 shadow-md text-base pulse-active">
+                            <span>下一步</span> <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+
+                        <button onclick="toggleAutoPlay()" id="btn-autoplay" title="自動播放" class="w-10 h-10 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center font-bold">
+                            <i id="autoplay-icon" class="fa-solid fa-play"></i>
+                        </button>
+                        <button onclick="lastStep()" title="前往最後一步" class="w-10 h-10 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-forward-step"></i>
+                        </button>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div id="step-progress-bar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Panel: Cantonese Step-by-Step Explanation & Reason Card -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-full justify-between min-h-[460px]">
+                
+                <div>
+                    <!-- Step Header -->
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span id="step-badge" class="px-3 py-1 bg-indigo-100 text-indigo-700 font-extrabold rounded-full text-xs">
+                                步驟 1
+                            </span>
+                            <h2 id="step-title" class="text-lg font-bold text-slate-800">準備計算</h2>
+                        </div>
+
+                        <!-- Cantonese Audio Speech Button -->
+                        <button onclick="speakCurrentStep()" class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-xl border border-amber-200 text-xs font-bold transition active:scale-95">
+                            <i class="fa-solid fa-volume-high text-amber-500 text-sm"></i>
+                            <span>粵語朗讀</span>
+                        </button>
+                    </div>
+
+                    <!-- Step Formula / Active Expression Box -->
+                    <div id="step-formula-box" class="mb-4 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-indigo-500"></i>
+                            <span class="text-xs font-bold text-indigo-900 uppercase tracking-wider">當前算式:</span>
+                        </div>
+                        <span id="step-formula" class="font-math text-xl font-bold text-indigo-700">234 × 16</span>
+                    </div>
+
+                    <!-- Cantonese Verbal Step Explanation (廣東話口語) -->
+                    <div class="mb-5">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-comment-dots text-blue-500"></i> 廣東話步驟講解 (How):
+                        </h3>
+                        <div id="cantonese-text" class="text-base text-slate-800 leading-relaxed font-medium bg-slate-50 p-4 rounded-xl border border-slate-200/80 shadow-sm min-h-[80px]">
+                            首先將被乘數同乘數靠右對齊寫好。個位對齊個位，十位對齊十位。
+                        </div>
+                    </div>
+
+                    <!-- Mathematical Reasoning Explanation (背後原理/點解要咁做) -->
+                    <div class="mb-4">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-brain text-purple-500"></i> 背後數學原理 (Why / 思考點):
+                        </h3>
+                        <div id="reason-text" class="text-sm text-purple-900 leading-relaxed bg-purple-50/80 p-4 rounded-xl border border-purple-100 min-h-[70px]">
+                            對齊數位係以便我地一數位一數位咁進行計算，確保個位加減乘除嘅數值正確。
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion / Jump Step Selector Footer -->
+                <div class="mt-4 pt-3 border-t border-slate-100">
+                    <button onclick="toggleStepListModal()" class="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-600 flex items-center justify-between transition">
+                        <span><i class="fa-solid fa-list-ol mr-1"></i> 檢視所有步驟清單</span>
+                        <i id="step-list-chevron" class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    
+                    <!-- Collapsible Step List -->
+                    <div id="step-list-container" class="hidden mt-2 max-h-48 overflow-y-auto space-y-1 pr-1 text-xs">
+                        <!-- Step items inserted dynamically -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Global Application State Variables
+        let currentOperation = 'multiply'; // multiply, divide, add, subtract
+        let currentStepIndex = 0;
+        let stepsData = [];
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+
+        // Web Speech API Voice synthesis initialization
+        let cantoneseVoice = null;
+
+        function initVoices() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    const voices = window.speechSynthesis.getVoices();
+                    cantoneseVoice = voices.find(v => 
+                        v.lang === 'zh-HK' || 
+                        v.lang === 'zh_HK' || 
+                        v.lang.toLowerCase().includes('cantonese') ||
+                        v.name.includes('Hong Kong') ||
+                        v.name.includes('Cantonese')
+                    );
+                };
+            }
+        }
+
+        window.onload = function() {
+            initVoices();
+            generateCalculation();
+        };
+
+        // Switch operation mode
+        function setOperation(op) {
+            currentOperation = op;
+            // Highlight tab
+            document.querySelectorAll('.op-tab').forEach(tab => {
+                tab.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                tab.classList.add('text-slate-600', 'hover:bg-slate-200');
+            });
+            const activeTab = document.getElementById(`tab-${op}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-slate-600', 'hover:bg-slate-200');
+                activeTab.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+            }
+
+            // Update symbol display
+            const symbolMap = { multiply: '×', divide: '÷', add: '+', subtract: '-' };
+            document.getElementById('op-symbol-display').innerText = symbolMap[op];
+
+            // Defaults if inputs are incompatible
+            const n1 = parseInt(document.getElementById('num1').value) || 234;
+            const n2 = parseInt(document.getElementById('num2').value) || 16;
+
+            if (op === 'divide' && (n2 === 0 || n1 < n2)) {
+                document.getElementById('num1').value = 756;
+                document.getElementById('num2').value = 12;
+            } else if (op === 'subtract' && n1 < n2) {
+                document.getElementById('num1').value = n2;
+                document.getElementById('num2').value = n1;
+            }
+
+            generateCalculation();
+        }
+
+        function loadPreset(n1, n2, op) {
+            document.getElementById('num1').value = n1;
+            document.getElementById('num2').value = n2;
+            setOperation(op);
+        }
+
+        // Main Calculation Router
+        function generateCalculation() {
+            stopAutoPlay();
+            const n1 = Math.abs(parseInt(document.getElementById('num1').value)) || 1;
+            const n2 = Math.abs(parseInt(document.getElementById('num2').value)) || 1;
+
+            if (currentOperation === 'multiply') {
+                stepsData = buildMultiplicationSteps(n1, n2);
+            } else if (currentOperation === 'divide') {
+                stepsData = buildDivisionSteps(n1, n2);
+            } else if (currentOperation === 'add') {
+                stepsData = buildAdditionSteps(n1, n2);
+            } else if (currentOperation === 'subtract') {
+                stepsData = buildSubtractionSteps(n1, Math.min(n1, n2));
+            }
+
+            currentStepIndex = 0;
+            renderCurrentStep();
+            updateStepListUI();
+        }
+
+        /* MULTIPLICATION ENGINE */
+        function buildMultiplicationSteps(a, b) {
+            const steps = [];
+            const strA = a.toString();
+            const strB = b.toString();
+            const lenA = strA.length;
+            const lenB = strB.length;
+
+            // Step 0: Setup
+            steps.push({
+                title: '排好直式，準備計算',
+                formula: `${a} × ${b}`,
+                cantonese: `首先將 ${a} 同 ${b} 靠右對齊寫好。上面係被乘數 (${a})，下面係乘數 (${b})。`,
+                reason: `對齊個位同十位，可以確保之後每一數位相乘時，位值（個位、十位、百位）唔會混亂。`,
+                type: 'multiply-grid',
+                numA: a,
+                numB: b,
+                activeAIndex: -1,
+                activeBIndex: -1,
+                partialProducts: [],
+                carries: {},
+                finalSum: null
+            });
+
+            const partialProducts = [];
+
+            // Loop through multiplier digits from right to left (ones, tens...)
+            for (let bIdx = lenB - 1; bIdx >= 0; bIdx--) {
+                const digitB = parseInt(strB[bIdx]);
+                const placePower = lenB - 1 - bIdx; // 0 for ones, 1 for tens
+                const placeName = placePower === 0 ? '個' : (placePower === 1 ? '十' : '百');
+
+                let currentCarries = {};
+                let currentPartialVal = 0;
+                let carry = 0;
+                let rowDigits = [];
+
+                // Step for starting this row
+                steps.push({
+                    title: `用乘數嘅【${placeName}位】數字 ${digitB} 去乘`,
+                    formula: `${a} × ${digitB}${placePower > 0 ? '0'.repeat(placePower) : ''}`,
+                    cantonese: `跟住我哋用乘數嘅${placeName}位數字 ${digitB}，由右至左逐個去乘被乘數 ${a} 嘅每一位。${placePower > 0 ? `注意：因為 ${digitB} 喺${placeName}位，代表 ${digitB * Math.pow(10, placePower)}，所以結果個位要補 ${placePower} 個 0！` : ''}`,
+                    reason: placePower > 0 ? `喺${placeName}位嘅 ${digitB} 實際上係 ${digitB * Math.pow(10, placePower)}。補 0 係為了將數值自動向左移位，保持位值正確。` : `由個位開始乘，方便隨時將滿十嘅數進位到高一位。`,
+                    type: 'multiply-grid',
+                    numA: a,
+                    numB: b,
+                    activeAIndex: -1,
+                    activeBIndex: bIdx,
+                    partialProducts: [...partialProducts],
+                    carries: { ...currentCarries },
+                    finalSum: null
+                });
+
+                // Multiply digitB by each digit in strA from right to left
+                for (let aIdx = lenA - 1; aIdx >= 0; aIdx--) {
+                    const digitA = parseInt(strA[aIdx]);
+                    const prod = digitA * digitB + carry;
+                    const writeDigit = prod % 10;
+                    const nextCarry = Math.floor(prod / 10);
+
+                    if (carry > 0) {
+                        currentCarries[aIdx] = carry;
+                    }
+
+                    let explanationStr = `用 ${digitB} 乘 ${digitA} 等於 ${digitA * digitB}。`;
+                    if (carry > 0) {
+                        explanationStr += `再加上之前進位嘅 ${carry}，等於 ${prod}。`;
+                    }
+                    if (nextCarry > 0) {
+                        explanationStr += `本位寫 ${writeDigit}，將 ${nextCarry} 進位到下一位。`;
+                    } else {
+                        explanationStr += `本位寫 ${writeDigit}，無需進位。`;
+                    }
+
+                    rowDigits.unshift(writeDigit);
+
+                    steps.push({
+                        title: `計算 ${digitB} × ${digitA}`,
+                        formula: `${digitA} × ${digitB} ${carry > 0 ? '+ ' + carry : ''} = ${prod}`,
+                        cantonese: explanationStr,
+                        reason: `每滿 10 個一就要湊成 1 個十進位，這就是「逢十進一」嘅十進制原則。`,
+                        type: 'multiply-grid',
+                        numA: a,
+                        numB: b,
+                        activeAIndex: aIdx,
+                        activeBIndex: bIdx,
+                        partialProducts: [...partialProducts, { value: digitB * a * Math.pow(10, placePower), power: placePower }],
+                        carries: { ...currentCarries, [aIdx - 1]: nextCarry > 0 ? nextCarry : undefined },
+                        finalSum: null
+                    });
+
+                    carry = nextCarry;
+                }
+
+                if (carry > 0) {
+                    rowDigits.unshift(carry);
+                    steps.push({
+                        title: `將最後進位 ${carry} 寫喺最前面`,
+                        formula: `最高位進位: ${carry}`,
+                        cantonese: `最後最高位仲有進位 ${carry}，直接寫喺最左邊。`,
+                        reason: `最高位冇其他數字再乘，所以進位直接成為部分積嘅最高位。`,
+                        type: 'multiply-grid',
+                        numA: a,
+                        numB: b,
+                        activeAIndex: -1,
+                        activeBIndex: bIdx,
+                        partialProducts: [...partialProducts, { value: digitB * a * Math.pow(10, placePower), power: placePower }],
+                        carries: {},
+                        finalSum: null
+                    });
+                }
+
+                partialProducts.push({ value: digitB * a * Math.pow(10, placePower), power: placePower });
+            }
+
+            // Final Step if multiplier > 1 digit: Add partial products
+            if (lenB > 1) {
+                const finalAns = a * b;
+                steps.push({
+                    title: '將兩行部分積相加',
+                    formula: partialProducts.map(p => p.value).join(' + ') + ` = ${finalAns}`,
+                    cantonese: `最後，將上面兩行算出來嘅部分積（${partialProducts.map(p => p.value).join(' 同 ')}）加埋一齊，得出最終答案 ${finalAns}！`,
+                    reason: `乘數 ${b} 被拆分成個位同十位，所以最終結果係各部位乘積嘅總和（乘法分配律）。`,
+                    type: 'multiply-grid',
+                    numA: a,
+                    numB: b,
+                    activeAIndex: -1,
+                    activeBIndex: -1,
+                    partialProducts: partialProducts,
+                    carries: {},
+                    finalSum: finalAns
+                });
+            }
+
+            return steps;
+        }
+
+        /* DIVISION ENGINE */
+        function buildDivisionSteps(dividend, divisor) {
+            const steps = [];
+            const strDiv = dividend.toString();
+            const len = strDiv.length;
+
+            steps.push({
+                title: '建立除法直式',
+                formula: `${dividend} ÷ ${divisor}`,
+                cantonese: `將被除數 ${dividend} 寫喺除號入面，除數 ${divisor} 寫喺除號左邊。`,
+                reason: `直式除法係由最高位（最左邊）開始逐位向右試商計算。`,
+                type: 'divide-grid',
+                dividend,
+                divisor,
+                quotientDigits: Array(len).fill(''),
+                workRows: [],
+                activeDigitIdx: -1
+            });
+
+            let currentVal = 0;
+            let quotientDigits = Array(len).fill('');
+            let workRows = []; // { level, value, length, offset, type: 'sub'|'rem' }
+
+            for (let i = 0; i < len; i++) {
+                const digit = parseInt(strDiv[i]);
+                currentVal = currentVal * 10 + digit;
+
+                steps.push({
+                    title: `睇第 ${i + 1} 位數字 ${digit}`,
+                    formula: `當前數值: ${currentVal}，除數: ${divisor}`,
+                    cantonese: `拉數字 ${digit} 落嚟，現時需要計算嘅數值係 ${currentVal}。睇下 ${currentVal} 夠唔夠除以 ${divisor}。`,
+                    reason: `如果當前數字比除數細，不夠除，商數就要寫 0，然後再拉下一位落嚟。`,
+                    type: 'divide-grid',
+                    dividend,
+                    divisor,
+                    quotientDigits: [...quotientDigits],
+                    workRows: [...workRows],
+                    activeDigitIdx: i
+                });
+
+                if (currentVal < divisor) {
+                    if (i > 0 || len === 1) { // Leading zeros not written for multi-digit unless needed
+                        quotientDigits[i] = '0';
+                        steps.push({
+                            title: `數值 ${currentVal} 細過 ${divisor}，商數寫 0`,
+                            formula: `${currentVal} < ${divisor} → 商寫 0`,
+                            cantonese: `${currentVal} 比 ${divisor} 細，不夠除！喺對應嘅位置商數寫 0。`,
+                            reason: `保持數位對齊，確保商數嘅每一個數位代表正確嘅位值。`,
+                            type: 'divide-grid',
+                            dividend,
+                            divisor,
+                            quotientDigits: [...quotientDigits],
+                            workRows: [...workRows],
+                            activeDigitIdx: i
+                        });
+                    }
+                } else {
+                    const qDigit = Math.floor(currentVal / divisor);
+                    const product = qDigit * divisor;
+                    const remainder = currentVal - product;
+
+                    quotientDigits[i] = qDigit.toString();
+
+                    steps.push({
+                        title: `試商：${currentVal} ÷ ${divisor} ≈ ${qDigit}`,
+                        formula: `${divisor} × ${qDigit} = ${product}`,
+                        cantonese: `${currentVal} 裡面最多有 ${qDigit} 個 ${divisor}。喺上面寫商數 ${qDigit}，然後用 ${qDigit} 乘除數 ${divisor} 得出 ${product}，寫喺下面。`,
+                        reason: `試商嘅目標係搵出不大於當前數值嘅最大倍數。`,
+                        type: 'divide-grid',
+                        dividend,
+                        divisor,
+                        quotientDigits: [...quotientDigits],
+                        workRows: [...workRows, { val: product, offset: i, isProduct: true }],
+                        activeDigitIdx: i
+                    });
+
+                    workRows.push({ val: product, offset: i, isProduct: true });
+
+                    steps.push({
+                        title: `做減法：${currentVal} - ${product} = ${remainder}`,
+                        formula: `${currentVal} - ${product} = ${remainder}`,
+                        cantonese: `將 ${currentVal} 減去 ${product}，得出餘數 ${remainder}。`,
+                        reason: `減法可以幫我哋計算出除完之後仲剩低幾多（餘數）。餘數一定要比除數細！`,
+                        type: 'divide-grid',
+                        dividend,
+                        divisor,
+                        quotientDigits: [...quotientDigits],
+                        workRows: [...workRows, { val: remainder, offset: i, isRemainder: true }],
+                        activeDigitIdx: i
+                    });
+
+                    workRows.push({ val: remainder, offset: i, isRemainder: true });
+                    currentVal = remainder;
+                }
+            }
+
+            // Summary
+            const finalQ = Math.floor(dividend / divisor);
+            const finalR = dividend % divisor;
+            steps.push({
+                title: '計算完成！',
+                formula: `${dividend} ÷ ${divisor} = ${finalQ} ${finalR > 0 ? '... ' + finalR : ''}`,
+                cantonese: `除法計算完畢！商數係 ${finalQ}${finalR > 0 ? `，餘數係 ${finalR}` : '，可以整除'}` + '。',
+                reason: `當被除數所有數位都拉落嚟計算完畢，最後嘅結果就是最終嘅商數與餘數。`,
+                type: 'divide-grid',
+                dividend,
+                divisor,
+                quotientDigits: quotientDigits,
+                workRows: workRows,
+                activeDigitIdx: -1
+            });
+
+            return steps;
+        }
+
+        /* ADDITION ENGINE */
+        function buildAdditionSteps(a, b) {
+            const steps = [];
+            const strA = a.toString();
+            const strB = b.toString();
+            const maxLen = Math.max(strA.length, strB.length);
+            const padA = strA.padStart(maxLen, '0');
+            const padB = strB.padStart(maxLen, '0');
+
+            steps.push({
+                title: '直式加法：靠右對齊',
+                formula: `${a} + ${b}`,
+                cantonese: `將 ${a} 同 ${b} 靠右對齊寫好，個位對個位，十位對十位。`,
+                reason: `同類位值相加，確保單位一致。`,
+                type: 'add-grid',
+                numA: a,
+                numB: b,
+                carries: {},
+                activeCol: -1,
+                resultDigits: Array(maxLen).fill('')
+            });
+
+            let carry = 0;
+            let carriesObj = {};
+            let resultDigits = Array(maxLen).fill('');
+
+            const placeNames = ['個', '十', '百', '千', '萬'];
+
+            for (let i = maxLen - 1; i >= 0; i--) {
+                const dA = parseInt(padA[i]);
+                const dB = parseInt(padB[i]);
+                const sum = dA + dB + carry;
+                const writeDigit = sum % 10;
+                const nextCarry = Math.floor(sum / 10);
+                const placeName = placeNames[maxLen - 1 - i] || '高';
+
+                let explanation = `【${placeName}位】計算 ${dA} + ${dB}`;
+                if (carry > 0) explanation += ` + 進位 ${carry}`;
+                explanation += ` = ${sum}。`;
+
+                if (nextCarry > 0) {
+                    explanation += `本位寫 ${writeDigit}，向 ${placeNames[maxLen - i] || '高'}位進 1。`;
+                } else {
+                    explanation += `本位寫 ${writeDigit}。`;
+                }
+
+                resultDigits[i] = writeDigit.toString();
+
+                steps.push({
+                    title: `計算【${placeName}位】: ${dA} + ${dB}`,
+                    formula: `${dA} + ${dB}${carry > 0 ? ' + ' + carry : ''} = ${sum}`,
+                    cantonese: explanation,
+                    reason: `相加滿 10 就要向左邊高一位進 1（逢十進一）。`,
+                    type: 'add-grid',
+                    numA: a,
+                    numB: b,
+                    carries: { ...carriesObj, [i - 1]: nextCarry > 0 ? nextCarry : undefined },
+                    activeCol: i,
+                    resultDigits: [...resultDigits]
+                });
+
+                if (nextCarry > 0) {
+                    carriesObj[i - 1] = nextCarry;
+                }
+                carry = nextCarry;
+            }
+
+            if (carry > 0) {
+                resultDigits.unshift(carry.toString());
+                steps.push({
+                    title: '最後最高位進位',
+                    formula: `最高位 + ${carry}`,
+                    cantonese: `最高位仲有一個進位 ${carry}，寫喺最左邊。`,
+                    reason: `最高位進位直接成為總和嘅最高位。`,
+                    type: 'add-grid',
+                    numA: a,
+                    numB: b,
+                    carries: carriesObj,
+                    activeCol: -1,
+                    resultDigits: resultDigits
+                });
+            }
+
+            return steps;
+        }
+
+        /* SUBTRACTION ENGINE */
+        function buildSubtractionSteps(a, b) {
+            const steps = [];
+            const strA = a.toString();
+            const strB = b.toString();
+            const maxLen = strA.length;
+            const padB = strB.padStart(maxLen, '0');
+
+            steps.push({
+                title: '直式減法：靠右對齊',
+                formula: `${a} - ${b}`,
+                cantonese: `將被減數 ${a} 同減數 ${b} 靠右對齊寫好。`,
+                reason: `個位減個位，十位減十位，順序由右至左計算。`,
+                type: 'sub-grid',
+                numA: a,
+                numB: b,
+                borrows: {},
+                activeCol: -1,
+                resultDigits: Array(maxLen).fill('')
+            });
+
+            let currentA = strA.split('').map(Number);
+            let resultDigits = Array(maxLen).fill('');
+            let borrowsObj = {};
+            const placeNames = ['個', '十', '百', '千', '萬'];
+
+            for (let i = maxLen - 1; i >= 0; i--) {
+                let dA = currentA[i];
+                const dB = parseInt(padB[i]);
+                const placeName = placeNames[maxLen - 1 - i] || '高';
+
+                if (dA < dB) {
+                    // Need borrow
+                    let borrowIdx = i - 1;
+                    while (borrowIdx >= 0 && currentA[borrowIdx] === 0) {
+                        borrowIdx--;
+                    }
+
+                    borrowsObj[i] = { added: 10, orig: dA };
+                    currentA[i] += 10;
+                    currentA[i - 1] -= 1;
+                    borrowsObj[i - 1] = { subtracted: 1, remaining: currentA[i - 1] };
+
+                    steps.push({
+                        title: `【${placeName}位】${dA} 細過 ${dB}，向左邊借 1`,
+                        formula: `${dA} 不夠減 ${dB} → 向高位借 1 當 10`,
+                        cantonese: `【${placeName}位】 ${dA} 細過 ${dB}，減唔到！要向高一位借 1。1 個高位等於 10 個本位，所以本位加 10 變成 ${dA + 10}。`,
+                        reason: `十進制中，高一位嘅 1 代表低一位嘅 10。這就是「退一當十」嘅原理。`,
+                        type: 'sub-grid',
+                        numA: a,
+                        numB: b,
+                        borrows: { ...borrowsObj },
+                        activeCol: i,
+                        resultDigits: [...resultDigits]
+                    });
+
+                    dA = currentA[i];
+                }
+
+                const diff = dA - dB;
+                resultDigits[i] = diff.toString();
+
+                steps.push({
+                    title: `計算【${placeName}位】: ${dA} - ${dB} = ${diff}`,
+                    formula: `${dA} - ${dB} = ${diff}`,
+                    cantonese: `【${placeName}位】用 ${dA} 減去 ${dB}，得出 ${diff}，寫喺下面。`,
+                    reason: `本位數字足夠相減，直接算出差值。`,
+                    type: 'sub-grid',
+                    numA: a,
+                    numB: b,
+                    borrows: { ...borrowsObj },
+                    activeCol: i,
+                    resultDigits: [...resultDigits]
+                });
+            }
+
+            return steps;
+        }
+
+        /* UI RENDERERS */
+        function renderCurrentStep() {
+            if (!stepsData || stepsData.length === 0) return;
+
+            const step = stepsData[currentStepIndex];
+
+            // Update Header & Explanations
+            document.getElementById('step-counter-text').innerText = `步驟 ${currentStepIndex + 1} / ${stepsData.length}`;
+            document.getElementById('step-badge').innerText = `步驟 ${currentStepIndex + 1}`;
+            document.getElementById('step-title').innerText = step.title;
+            document.getElementById('step-formula').innerText = step.formula;
+            document.getElementById('cantonese-text').innerText = step.cantonese;
+            document.getElementById('reason-text').innerText = step.reason;
+
+            // Update Progress bar
+            const percent = ((currentStepIndex + 1) / stepsData.length) * 100;
+            document.getElementById('step-progress-bar').style.width = `${percent}%`;
+
+            // Enable/disable buttons
+            document.getElementById('btn-prev').disabled = currentStepIndex === 0;
+            document.getElementById('btn-prev').classList.toggle('opacity-50', currentStepIndex === 0);
+
+            const isLast = currentStepIndex === stepsData.length - 1;
+            document.getElementById('btn-next').innerText = isLast ? '完成' : '下一步';
+
+            // Render Board Canvas HTML
+            const board = document.getElementById('math-board');
+            board.innerHTML = '';
+
+            if (step.type === 'multiply-grid') {
+                renderMultiplicationBoard(board, step);
+            } else if (step.type === 'divide-grid') {
+                renderDivisionBoard(board, step);
+            } else if (step.type === 'add-grid') {
+                renderAdditionBoard(board, step);
+            } else if (step.type === 'sub-grid') {
+                renderSubtractionBoard(board, step);
+            }
+
+            // Auto Speech if checked
+            if (document.getElementById('auto-speech-toggle').checked) {
+                speakCurrentStep();
+            }
+        }
+
+        function renderMultiplicationBoard(container, step) {
+            const strA = step.numA.toString();
+            const strB = step.numB.toString();
+            const maxCols = Math.max(strA.length + strB.length, 5);
+
+            let html = `<div class="math-grid" style="grid-template-columns: repeat(${maxCols}, minmax(0, 1fr));">`;
+
+            // Carry row
+            for (let c = 0; c < maxCols; c++) {
+                const aIdx = strA.length - (maxCols - c);
+                const carryVal = step.carries && step.carries[aIdx];
+                html += `<div class="grid-cell">${carryVal ? `<span class="carry-tag">+${carryVal}</span>` : ''}</div>`;
+            }
+
+            // Row A (Multiplicand)
+            for (let c = 0; c < maxCols; c++) {
+                const aIdx = strA.length - (maxCols - c);
+                const digit = aIdx >= 0 ? strA[aIdx] : '';
+                const isHighlight = aIdx === step.activeAIndex;
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-primary' : ''}">${digit}</div>`;
+            }
+
+            // Row B (Multiplier with Operator)
+            for (let c = 0; c < maxCols; c++) {
+                const bIdx = strB.length - (maxCols - c);
+                const digit = bIdx >= 0 ? strB[bIdx] : '';
+                const isHighlight = bIdx === step.activeBIndex;
+                const isOp = c === maxCols - Math.max(strA.length, strB.length) - 1;
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-secondary' : ''}">${isOp ? '×' : digit}</div>`;
+            }
+
+            // Line separator
+            html += `<div class="col-span-full border-b-2 border-slate-800 my-1"></div>`;
+
+            // Partial Product rows
+            step.partialProducts.forEach((pp, pIdx) => {
+                const valStr = pp.value.toString();
+                for (let c = 0; c < maxCols; c++) {
+                    const idx = valStr.length - (maxCols - c);
+                    const digit = idx >= 0 ? valStr[idx] : '';
+                    const isZeroPad = idx >= valStr.length - pp.power && pp.power > 0;
+                    html += `<div class="grid-cell ${isZeroPad ? 'text-slate-400 font-normal' : ''}">${digit}</div>`;
+                }
+            });
+
+            // Final Line and Final Sum
+            if (step.finalSum !== null) {
+                html += `<div class="col-span-full border-b-2 border-slate-800 my-1"></div>`;
+                const sumStr = step.finalSum.toString();
+                for (let c = 0; c < maxCols; c++) {
+                    const idx = sumStr.length - (maxCols - c);
+                    const digit = idx >= 0 ? sumStr[idx] : '';
+                    html += `<div class="grid-cell cell-highlight-result">${digit}</div>`;
+                }
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderDivisionBoard(container, step) {
+            const strDiv = step.dividend.toString();
+            const strDivisor = step.divisor.toString();
+            const cols = strDiv.length;
+
+            let html = `<div class="flex items-center font-math text-2xl font-bold gap-1">`;
+            
+            // Divisor on Left
+            html += `<div class="px-3 py-2 text-indigo-700 bg-indigo-50 rounded-lg border border-indigo-200">${step.divisor}</div>`;
+
+            // Main Division Bracket Layout
+            html += `<div class="flex flex-col border-t-4 border-l-4 border-slate-800 rounded-tl-xl pl-3 pt-1">`;
+
+            // Quotient Row
+            html += `<div class="flex gap-3 h-10 items-center border-b border-dashed border-slate-300 pb-1">`;
+            for (let i = 0; i < cols; i++) {
+                const q = step.quotientDigits[i] || '';
+                const isActive = i === step.activeDigitIdx;
+                html += `<div class="w-8 text-center font-extrabold ${isActive ? 'text-indigo-600 scale-125 bg-yellow-200 rounded' : 'text-slate-800'}">${q}</div>`;
+            }
+            html += `</div>`;
+
+            // Dividend Row
+            html += `<div class="flex gap-3 h-10 items-center">`;
+            for (let i = 0; i < cols; i++) {
+                const isActive = i === step.activeDigitIdx;
+                html += `<div class="w-8 text-center ${isActive ? 'bg-yellow-300 text-yellow-950 rounded-lg font-black' : ''}">${strDiv[i]}</div>`;
+            }
+            html += `</div>`;
+
+            // Work Rows (Products and Remainders)
+            step.workRows.forEach(row => {
+                const valStr = row.val.toString();
+                const offset = row.offset; // digit index right aligned to
+                
+                html += `<div class="flex gap-3 h-8 items-center ${row.isProduct ? 'border-b border-slate-700' : ''}">`;
+                for (let i = 0; i < cols; i++) {
+                    const charIdx = valStr.length - 1 - (offset - i);
+                    const char = (charIdx >= 0 && charIdx < valStr.length) ? valStr[charIdx] : '';
+                    html += `<div class="w-8 text-center ${row.isRemainder ? 'text-indigo-600 font-bold' : 'text-slate-600'}">${char}</div>`;
+                }
+                html += `</div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        function renderAdditionBoard(container, step) {
+            const strA = step.numA.toString();
+            const strB = step.numB.toString();
+            const maxCols = Math.max(strA.length, strB.length) + 1;
+
+            let html = `<div class="math-grid" style="grid-template-columns: repeat(${maxCols}, minmax(0, 1fr));">`;
+
+            // Carry row
+            for (let c = 0; c < maxCols; c++) {
+                const carryVal = step.carries && step.carries[c];
+                html += `<div class="grid-cell">${carryVal ? `<span class="carry-tag">+${carryVal}</span>` : ''}</div>`;
+            }
+
+            // Num A
+            for (let c = 0; c < maxCols; c++) {
+                const idx = strA.length - (maxCols - c);
+                const digit = idx >= 0 ? strA[idx] : '';
+                const isHighlight = c === step.activeCol + (maxCols - Math.max(strA.length, strB.length));
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-primary' : ''}">${digit}</div>`;
+            }
+
+            // Num B
+            for (let c = 0; c < maxCols; c++) {
+                const idx = strB.length - (maxCols - c);
+                const digit = idx >= 0 ? strB[idx] : '';
+                const isOp = c === 0;
+                const isHighlight = c === step.activeCol + (maxCols - Math.max(strA.length, strB.length));
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-secondary' : ''}">${isOp ? '+' : digit}</div>`;
+            }
+
+            // Separator
+            html += `<div class="col-span-full border-b-2 border-slate-800 my-1"></div>`;
+
+            // Result
+            for (let c = 0; c < maxCols; c++) {
+                const idx = step.resultDigits.length - (maxCols - c);
+                const digit = idx >= 0 ? step.resultDigits[idx] : '';
+                html += `<div class="grid-cell ${digit ? 'cell-highlight-result' : ''}">${digit}</div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderSubtractionBoard(container, step) {
+            const strA = step.numA.toString();
+            const strB = step.numB.toString();
+            const maxCols = strA.length + 1;
+
+            let html = `<div class="math-grid" style="grid-template-columns: repeat(${maxCols}, minmax(0, 1fr));">`;
+
+            // Borrow Row
+            for (let c = 0; c < maxCols; c++) {
+                const idx = strA.length - (maxCols - c);
+                const bInfo = step.borrows && step.borrows[idx];
+                html += `<div class="grid-cell">${bInfo ? `<span class="text-xs font-bold text-blue-600 bg-blue-100 px-1 rounded">${bInfo.added ? '+10' : bInfo.remaining}</span>` : ''}</div>`;
+            }
+
+            // Num A
+            for (let c = 0; c < maxCols; c++) {
+                const idx = strA.length - (maxCols - c);
+                const digit = idx >= 0 ? strA[idx] : '';
+                const bInfo = step.borrows && step.borrows[idx];
+                const isHighlight = c === step.activeCol + 1;
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-primary' : ''} ${bInfo && bInfo.subtracted ? 'strike-through' : ''}">${digit}</div>`;
+            }
+
+            // Num B
+            for (let c = 0; c < maxCols; c++) {
+                const idx = strB.length - (maxCols - c);
+                const digit = idx >= 0 ? strB[idx] : '';
+                const isOp = c === 0;
+                const isHighlight = c === step.activeCol + 1;
+                html += `<div class="grid-cell ${isHighlight ? 'cell-highlight-secondary' : ''}">${isOp ? '-' : digit}</div>`;
+            }
+
+            // Separator
+            html += `<div class="col-span-full border-b-2 border-slate-800 my-1"></div>`;
+
+            // Result
+            for (let c = 0; c < maxCols; c++) {
+                const idx = step.resultDigits.length - (maxCols - c);
+                const digit = idx >= 0 ? step.resultDigits[idx] : '';
+                html += `<div class="grid-cell ${digit ? 'cell-highlight-result' : ''}">${digit}</div>`;
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        /* NAVIGATION CONTROLS */
+        function nextStep() {
+            if (currentStepIndex < stepsData.length - 1) {
+                currentStepIndex++;
+                renderCurrentStep();
+            } else {
+                stopAutoPlay();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderCurrentStep();
+            }
+        }
+
+        function firstStep() {
+            currentStepIndex = 0;
+            renderCurrentStep();
+        }
+
+        function lastStep() {
+            currentStepIndex = stepsData.length - 1;
+            renderCurrentStep();
+        }
+
+        function jumpToStep(idx) {
+            currentStepIndex = idx;
+            renderCurrentStep();
+        }
+
+        function toggleAutoPlay() {
+            if (isAutoPlaying) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            isAutoPlaying = true;
+            document.getElementById('autoplay-icon').className = 'fa-solid fa-pause text-indigo-600';
+            if (currentStepIndex === stepsData.length - 1) {
+                currentStepIndex = 0;
+            }
+            renderCurrentStep();
+            autoPlayInterval = setInterval(() => {
+                if (currentStepIndex < stepsData.length - 1) {
+                    currentStepIndex++;
+                    renderCurrentStep();
+                } else {
+                    stopAutoPlay();
+                }
+            }, 3500); // 3.5 seconds per step
+        }
+
+        function stopAutoPlay() {
+            isAutoPlaying = false;
+            document.getElementById('autoplay-icon').className = 'fa-solid fa-play';
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+
+        /* CANTONESE TEXT-TO-SPEECH (TTS) */
+        function speakCurrentStep() {
+            if (!('speechSynthesis' in window)) return;
+
+            window.speechSynthesis.cancel(); // cancel any ongoing speech
+
+            const step = stepsData[currentStepIndex];
+            if (!step) return;
+
+            const textToSpeak = `${step.title}。${step.cantonese}。原理係：${step.reason}`;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            if (cantoneseVoice) {
+                utterance.voice = cantoneseVoice;
+            } else {
+                utterance.lang = 'zh-HK';
+            }
+            utterance.rate = 0.92; // Natural teaching speed
+            utterance.pitch = 1.0;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function updateStepListUI() {
+            const container = document.getElementById('step-list-container');
+            container.innerHTML = '';
+
+            stepsData.forEach((st, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2 rounded-lg border transition flex items-center justify-between ${idx === currentStepIndex ? 'bg-indigo-50 border-indigo-300 font-bold text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'}`;
+                btn.onclick = () => jumpToStep(idx);
+                btn.innerHTML = `
+                    <span>步驟 ${idx + 1}: ${st.title}</span>
+                    <span class="font-math text-slate-500 text-[10px]">${st.formula}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function toggleStepListModal() {
+            const el = document.getElementById('step-list-container');
+            const chevron = document.getElementById('step-list-chevron');
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                chevron.className = 'fa-solid fa-chevron-up';
+            } else {
+                el.classList.add('hidden');
+                chevron.className = 'fa-solid fa-chevron-down';
+            }
+        }
+    </script>
+</body>
+</html>
